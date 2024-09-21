@@ -41,16 +41,16 @@ class Chunk(Entity):
         super().__init__(model=None, collider=None,shader = basic_lighting_shader, **kwargs)
         self.chunk_pos = chunk_pos
         self.blocks = {}
-        self.noise = PerlinNoise(octaves=3, seed=4522)
+        self.noise = PerlinNoise(octaves=2, seed=3504)
         self.generate_chunk()
     def generate_chunk(self):
         cx, cz = self.chunk_pos
-        for x in range(-CHUNKZISE, CHUNKZISE):
-            for z in range(-CHUNKZISE, CHUNKZISE):
+        for x in range(CHUNKZISE):
+            for z in range(CHUNKZISE):
                 block_x = cx*CHUNKZISE + x
                 block_z = cz * CHUNKZISE + z
 
-                y = floor(self.noise([x / 24, z / 24]) * 6)
+                y = floor(self.noise([block_x / 24, block_z / 24]) * 6)
                 block = Block((block_x, y, block_z), self)
                 self.blocks[(block_x, y, block_z)] = block
 

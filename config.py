@@ -1,8 +1,8 @@
 from ursina import load_texture
 import os
 
-CHUNKZISE = 10
-WORLDSIZE = 2
+CHUNKZISE = 20
+WORLDSIZE = 3
 
 BASE_DIR = os.getcwd()
 IMG_DIR = os.path.join(BASE_DIR, 'assets/cube_grass')

@@ -10,7 +10,10 @@ from models import Block, WordlEdit
 
 player = FirstPersonController()
 sky = Sky(texture='sky_sunset')
-
+player.x = CHUNKZISE/2
+player.z = CHUNKZISE/2
+player.y = 20
+player.gravity = 0.5
 
 # sworod = Entity(model='assets/scene', scale=0.1, collider='box')
 # ground = Entity(model='quad', texture='grass',
