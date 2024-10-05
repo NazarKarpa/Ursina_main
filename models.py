@@ -4,10 +4,14 @@ from ursina.shaders import basic_lighting_shader
 from perlin_noise import PerlinNoise
 from random import randint
 
+import pickle
+
 scene.trees = {}
+
+
 class Tree(Entity):
 
-    def __init__(self, pos, parent_world, **kwargs):
+    def __init__(self, pos, **kwargs):
         super().__init__(
             parent=scene,#Батьківський елемент
             model='assets/minecraft_tree/scene',
@@ -38,6 +42,9 @@ class Block(Button):
             **kwargs)
         parent_world.blocks[(self.x, self.y, self.z)] = self
         self.id = block_id
+
+
+
 class Chunk(Entity):
     def __init__(self, chunk_pos,  **kwargs):
         super().__init__(model=None, collider=None,shader = basic_lighting_shader, **kwargs)
@@ -85,9 +92,8 @@ class Chunk(Entity):
 
 
                 rand_num = randint(0, 300)
-
                 if rand_num == 52:
-                    tree = Tree((block_x, y + 1, block_z), self)
+                    tree = Tree((block_x, y + 1, block_z))
 
 
 class WordlEdit(Entity):
@@ -105,8 +111,60 @@ class WordlEdit(Entity):
                     chunk = Chunk(chunk_pos)
                     self.chunks[chunk_pos] = chunk
 
+    def save_game(self):
+        game_data = {
+            'player_pos': (self.player.x, self.player.y, self.player.z),
+            'chunks': [],
+            'trees': []
+        }
+        for chunk_pos, chunk in self.chunks.items():
+            blocks_data = []
+            for block_pos, block, in chunk.blocks.items():
+                blocks_data.append((block_pos, block.id))
+            game_data['chunks'].append((chunk_pos, blocks_data))
+
+        for tree_pos, tree in scene.trees.items():
+            game_data['trees'].append((tree_pos, tree.scale))
+
+        with open('save.dat ', 'wb') as file:
+            pickle.dump(game_data, file)
+            print('гру збережено')
+
+    def clear_world(self):
+        for chunk in self.chunks.values():
+            for block in chunk.blocks.values():
+                destroy(block)
+            destroy(chunk)
+        for tree in scene.trees.values():
+            destroy(tree)
+        scene.trees.clear()
+        self.chunks.clear()
+
+    def load_world(self, chunk_data, tree_data):
+        for chunk_pos, blocks in chunk_data:
+            chunk = Chunk(chunk_pos)
+            for block_pos, block_id in blocks:
+                Block(block_pos, chunk, block_id)
+            self.chunks[chunk_pos] = chunk
+        for tree_pos, tree_scale in tree_data:
+            tree = Tree(tree_pos)
+            tree.scale = tree_scale
+
+    def load_game(self):
+        self.clear_world()
+        with open('save.dat', 'rb') as file:
+            game_data = pickle.load(file)
+            self.clear_world()
+            self.load_world(game_data['chunks'], game_data['trees'])
+            self.player.x, self.player.y, self.player.z = game_data['player_pos']
+            print('гру завантажено')
 
     def input(self, key):
+        if key == 'v':
+            self.save_game()
+
+        if key == 'l':
+            self.load_game()
 
         if key == 'right mouse down':
             hit_info = raycast(camera.world_position, camera.forward, distance=5)
@@ -129,12 +187,12 @@ class WordlEdit(Entity):
         if key == 'scroll up':
             Block.id = Block.id + 1
 
-            if Block.id > len(block_texture):
+            if Block.id >= len(block_texture):
                 Block.id = 0
         if key == 'scroll down':
             Block.id = Block.id - 1
-            if Block.id < 0:
-                Block.id = 0
+            if Block.id <= 0:
+                Block.id = 7
 
     def update(self):
         player_pos = self.player.position
